@@ -1,12 +1,14 @@
 --!strict
 -- ============================================================
--- ★ DILEMMA ROYALE: MASTER GAME CONTROLLER ★
--- Server Script: Game Loop, Sensor Hitung Kepala, & Event Modifiers
+-- ★ DILEMMA ROYALE: MASTER GAME CONTROLLER v2.0 ★
+-- Termasuk: Event Modifiers, Headcount Sensor, Neutral Beam,
+-- Greed Orb Spawner, DataStore Persistence, & Leaderboard
 -- ============================================================
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local SoundService = game:GetService("SoundService")
+local Debris = game:GetService("Debris")
 
 local tickSfx = SoundService:WaitForChild("SFX_Tick")
 local alarmSfx = SoundService:WaitForChild("SFX_Alarm")
@@ -23,6 +25,7 @@ if successStore then PlayerDataStore = errStore end
 local arena = workspace:WaitForChild("DilemmaArena")
 local redPlate = arena:WaitForChild("PlateRed")
 local bluePlate = arena:WaitForChild("PlateBlue")
+local neutralBeam = arena:WaitForChild("NeutralBeam")
 local screen = arena:WaitForChild("DilemmaScreen")
 local frame = screen:WaitForChild("SurfaceGui"):WaitForChild("Frame")
 local titleText = frame:WaitForChild("TitleText")
@@ -34,12 +37,13 @@ local DEFAULT_RED_POS = Vector3.new(-20, 50, 0)
 local DEFAULT_BLUE_POS = Vector3.new(20, 50, 0)
 
 local Dilemmas = {
-    "PILIH: WiFi Super Kencang (MERAH) vs Makan Enak Gratis Selamanya (BIRU)",
-    "DILEMA: Jago Coding Ga Punya Pacar (MERAH) vs Populer Ga Punya Duit (BIRU)",
-    "SUPERPOWER: Bisa Terbang (MERAH) vs Bisa Menghilang (BIRU)",
-    "WAKTU: Pergi ke Masa Lalu (MERAH) vs Pergi ke Masa Depan (BIRU)",
-    "KARIR: Sukses di Usia Muda (MERAH) vs Santai Menikmati Hidup (BIRU)",
-    "GAMING: Jago Semua Game (MERAH) vs Punya PC Sultan 500 Juta (BIRU)"
+    {Cat = "DILEMA SOSIAL", Text = "PILIH: WiFi Super Kencang (MERAH) vs Makan Enak Gratis (BIRU)"},
+    {Cat = "SUPERPOWER", Text = "SUPERPOWER: Bisa Terbang (MERAH) vs Bisa Menghilang (BIRU)"},
+    {Cat = "TIME TRAVEL", Text = "WAKTU: Pergi ke Masa Lalu (MERAH) vs Pergi ke Masa Depan (BIRU)"},
+    {Cat = "GAMING", Text = "GAMING: Jago Semua Game (MERAH) vs Punya PC Sultan 500 Juta (BIRU)"},
+    {Cat = "KARIR", Text = "KARIR: Sukses di Usia Muda (MERAH) vs Santai Menikmati Hidup (BIRU)"},
+    {Cat = "TAKTIKAL SURVIVAL", Text = "RISIKO: Kubu MERAH Lebih Luas vs Kubu BIRU Bonus +20 Koin!"},
+    {Cat = "GREED DILEMMA", Text = "AMBISI: Selamat di Kubu Minoritas vs Rebut GREED ORB di Balok Netral!"}
 }
 
 local Modifiers = {
@@ -67,6 +71,18 @@ local function getPlateHeadcount(plate: Part): number
         end
     end
     return count
+end
+
+-- Deteksi apakah pemain berada di atas Neutral Beam
+local function isPlayerOnNeutralBeam(char: Model): boolean
+    local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart?
+    if not hrp or not neutralBeam then return false end
+    local pos = hrp.Position
+    local minX = neutralBeam.Position.X - (neutralBeam.Size.X / 2) - 0.5
+    local maxX = neutralBeam.Position.X + (neutralBeam.Size.X / 2) + 0.5
+    local minZ = neutralBeam.Position.Z - (neutralBeam.Size.Z / 2)
+    local maxZ = neutralBeam.Position.Z + (neutralBeam.Size.Z / 2)
+    return pos.X >= minX and pos.X <= maxX and pos.Z >= minZ and pos.Z <= maxZ and pos.Y > 48 and pos.Y < 60
 end
 
 -- 2. SETUP OVERHEAD TITLE STATUS SOSIAL
@@ -151,7 +167,69 @@ task.spawn(function()
     end
 end)
 
--- 5. MASTER GAME LOOP (DENGAN EVENT MODIFIERS & HEADCOUNT)
+-- 5. GREED ORB SPAWNER
+local currentGreedOrb: Part? = nil
+local function spawnGreedOrb()
+    if currentGreedOrb then
+        currentGreedOrb:Destroy()
+        currentGreedOrb = nil
+    end
+
+    local orb = Instance.new("Part")
+    orb.Name = "GreedOrb"
+    orb.Shape = Enum.PartType.Ball
+    orb.Size = Vector3.new(2.5, 2.5, 2.5)
+    orb.Position = Vector3.new(0, 53.5, math.random(-15, 15))
+    orb.Anchored = true
+    orb.CanCollide = false
+    orb.Material = Enum.Material.Neon
+    orb.Color = Color3.fromRGB(255, 215, 0)
+    orb.Parent = arena
+
+    -- Particle effect
+    local attachment = Instance.new("Attachment", orb)
+    local pe = Instance.new("ParticleEmitter")
+    pe.Color = ColorSequence.new(Color3.fromRGB(255, 230, 50))
+    pe.Size = NumberSequence.new(0.5, 0)
+    pe.Rate = 15
+    pe.Speed = NumberRange.new(1, 3)
+    pe.Lifetime = NumberRange.new(0.5, 1)
+    pe.Parent = attachment
+
+    local collected = false
+    orb.Touched:Connect(function(hit)
+        if collected then return end
+        local char = hit.Parent
+        if not char then return end
+        local player = Players:GetPlayerFromCharacter(char)
+        if not player then return end
+
+        collected = true
+        local stats = player:FindFirstChild("leaderstats")
+        if stats then
+            local coins = stats:FindFirstChild("Coins") :: IntValue?
+            if coins then
+                coins.Value += 5
+                print(string.format(">> [GREED ORB] %s mengambil Greed Orb (+5 Koin)! <<", player.Name))
+            end
+        end
+
+        winSfx:Play()
+        orb:Destroy()
+        currentGreedOrb = nil
+    end)
+
+    currentGreedOrb = orb
+end
+
+local function cleanGreedOrb()
+    if currentGreedOrb then
+        currentGreedOrb:Destroy()
+        currentGreedOrb = nil
+    end
+end
+
+-- 6. MASTER GAME LOOP (DENGAN EVENT MODIFIERS, HEADCOUNT, & NEUTRAL BEAM)
 task.spawn(function()
     task.wait(2)
     while true do
@@ -169,11 +247,11 @@ task.spawn(function()
         bluePlate.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
 
         local currentMod = Modifiers[math.random(1, #Modifiers)]
-        local currentDilemma = Dilemmas[math.random(1, #Dilemmas)]
+        local dilemmaItem = Dilemmas[math.random(1, #Dilemmas)]
 
-        titleText.Text = "⚠️ EVENT: [ " .. currentMod.Name .. " ] ⚠️"
+        titleText.Text = "⚠️ [ " .. dilemmaItem.Cat .. " ] EVENT: " .. currentMod.Name .. " ⚠️"
         titleText.TextColor3 = Color3.fromRGB(255, 215, 0)
-        questionText.Text = currentDilemma
+        questionText.Text = dilemmaItem.Text
 
         if currentMod.Type == "Ice" then
             redPlate.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.01, 0.1)
@@ -181,6 +259,8 @@ task.spawn(function()
         elseif currentMod.Type == "Gravity" then
             workspace.Gravity = 50
         end
+
+        spawnGreedOrb()
 
         for sec = 10, 1, -1 do
             local currentRed = getPlateHeadcount(redPlate)
@@ -202,6 +282,8 @@ task.spawn(function()
             end
             task.wait(1)
         end
+
+        cleanGreedOrb()
 
         timerText.Text = "WAKTU HABIS!"
         timerText.TextColor3 = Color3.fromRGB(255, 215, 0)
@@ -250,18 +332,24 @@ task.spawn(function()
         for _, player in ipairs(Players:GetPlayers()) do
             local char = player.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
+                -- Cek apakah player di winning plate ATAU di Neutral Beam
+                local onNeutral = isPlayerOnNeutralBeam(char)
                 local pos = (char:FindFirstChild("HumanoidRootPart") :: BasePart).Position
                 local minX = winningPlate.Position.X - (winningPlate.Size.X / 2)
                 local maxX = winningPlate.Position.X + (winningPlate.Size.X / 2)
                 local minZ = winningPlate.Position.Z - (winningPlate.Size.Z / 2)
                 local maxZ = winningPlate.Position.Z + (winningPlate.Size.Z / 2)
+                local onWinning = (pos.X >= minX and pos.X <= maxX and pos.Z >= minZ and pos.Z <= maxZ and pos.Y > 45)
 
-                if pos.X >= minX and pos.X <= maxX and pos.Z >= minZ and pos.Z <= maxZ and pos.Y > 45 then
+                if onWinning or onNeutral then
                     local stats = player:FindFirstChild("leaderstats")
                     if stats then
                         stats.Wins.Value = stats.Wins.Value + 1
-                        stats.Coins.Value = stats.Coins.Value + 10
+                        stats.Coins.Value = stats.Coins.Value + (onNeutral and 15 or 10)
                         someoneWon = true
+                        if onNeutral then
+                            print(string.format(">> [NEUTRAL SURVIVOR] %s selamat di Neutral Beam (+15 Koin)! <<", player.Name))
+                        end
                     end
                 end
             end

@@ -84,3 +84,4 @@ for _, child in ipairs(itemsFrame:GetChildren()) do
 end
 
 print(">> [CLIENT] ShopController Sukses Dimuat! <<")
+

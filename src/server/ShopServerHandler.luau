@@ -152,3 +152,4 @@ shopRemote.OnServerInvoke = function(player: Player, perkId: string)
 end
 
 print(">> [SUKSES] ShopServerHandler Resmi Berjalan! <<")
+

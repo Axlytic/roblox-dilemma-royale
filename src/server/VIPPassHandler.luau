@@ -71,3 +71,4 @@ end
 vipPad.Touched:Connect(onVIPPADTouched)
 
 print(">> [SUKSES] VIPPassHandler Resmi Berjalan dengan ID: 2064678688! <<")
+

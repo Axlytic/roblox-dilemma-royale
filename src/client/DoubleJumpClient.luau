@@ -80,3 +80,4 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 print(">> [CLIENT] DoubleJumpClient Sukses Dimuat! <<")
+
