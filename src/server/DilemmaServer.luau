@@ -1,8 +1,8 @@
 --!strict
 -- ============================================================
--- ★ DILEMMA ROYALE: MASTER GAME CONTROLLER v2.0 ★
+-- ★ DILEMMA ROYALE: MASTER GAME CONTROLLER v3.0 ★
 -- Termasuk: Event Modifiers, Headcount Sensor, Neutral Beam,
--- Greed Orb Spawner, DataStore Persistence, & Leaderboard
+-- Greed Orb Spawner, Colosseum Respawn, Integrasi Stat Luck, & DataStore
 -- ============================================================
 
 local Players = game:GetService("Players")
@@ -35,6 +35,7 @@ local timerText = frame:WaitForChild("TimerText")
 local DEFAULT_SIZE = Vector3.new(35, 3, 50)
 local DEFAULT_RED_POS = Vector3.new(-20, 50, 0)
 local DEFAULT_BLUE_POS = Vector3.new(20, 50, 0)
+local COLOSSEUM_SPAWN_POS = Vector3.new(0, 62, 70)
 
 local Dilemmas = {
     {Cat = "DILEMA SOSIAL", Text = "PILIH: WiFi Super Kencang (MERAH) vs Makan Enak Gratis (BIRU)"},
@@ -83,6 +84,21 @@ local function isPlayerOnNeutralBeam(char: Model): boolean
     local minZ = neutralBeam.Position.Z - (neutralBeam.Size.Z / 2)
     local maxZ = neutralBeam.Position.Z + (neutralBeam.Size.Z / 2)
     return pos.X >= minX and pos.X <= maxX and pos.Z >= minZ and pos.Z <= maxZ and pos.Y > 48 and pos.Y < 60
+end
+
+local function getPlayerLuckMultiplier(player: Player): number
+    local stats = player:FindFirstChild("PlayerStats")
+    if stats then
+        local luckObj = stats:FindFirstChild("Luck") :: IntValue?
+        if luckObj and luckObj.Value > 1 then
+            -- Setiap level luck memberi 5% peluang bonus koin
+            local roll = math.random(1, 100)
+            if roll <= (luckObj.Value * 8) then
+                return 1.5 -- 50% Bonus koin keberuntungan!
+            end
+        end
+    end
+    return 1.0
 end
 
 -- 2. SETUP OVERHEAD TITLE STATUS SOSIAL
@@ -151,7 +167,7 @@ end
 Players.PlayerAdded:Connect(setupPlayer)
 for _, p in ipairs(Players:GetPlayers()) do setupPlayer(p) end
 
--- 4. VOID TELEPORT PROTECTOR
+-- 4. VOID TELEPORT PROTECTOR (RESPAWN KE COLOSSEUM DECK)
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -160,7 +176,7 @@ task.spawn(function()
             if c and c:FindFirstChild("HumanoidRootPart") then
                 local hrp = c:FindFirstChild("HumanoidRootPart") :: BasePart
                 if hrp.Position.Y < 20 then
-                    hrp.CFrame = CFrame.new(0, 54, 70)
+                    hrp.CFrame = CFrame.new(COLOSSEUM_SPAWN_POS)
                 end
             end
         end
@@ -209,8 +225,10 @@ local function spawnGreedOrb()
         if stats then
             local coins = stats:FindFirstChild("Coins") :: IntValue?
             if coins then
-                coins.Value += 5
-                print(string.format(">> [GREED ORB] %s mengambil Greed Orb (+5 Koin)! <<", player.Name))
+                local mult = getPlayerLuckMultiplier(player)
+                local reward = math.floor(5 * mult)
+                coins.Value += reward
+                print(string.format(">> [GREED ORB] %s mengambil Greed Orb (+%d Koin)! <<", player.Name, reward))
             end
         end
 
@@ -332,7 +350,6 @@ task.spawn(function()
         for _, player in ipairs(Players:GetPlayers()) do
             local char = player.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
-                -- Cek apakah player di winning plate ATAU di Neutral Beam
                 local onNeutral = isPlayerOnNeutralBeam(char)
                 local pos = (char:FindFirstChild("HumanoidRootPart") :: BasePart).Position
                 local minX = winningPlate.Position.X - (winningPlate.Size.X / 2)
@@ -345,10 +362,13 @@ task.spawn(function()
                     local stats = player:FindFirstChild("leaderstats")
                     if stats then
                         stats.Wins.Value = stats.Wins.Value + 1
-                        stats.Coins.Value = stats.Coins.Value + (onNeutral and 15 or 10)
+                        local baseReward = onNeutral and 15 or 10
+                        local luckMult = getPlayerLuckMultiplier(player)
+                        local finalCoins = math.floor(baseReward * luckMult)
+                        stats.Coins.Value = stats.Coins.Value + finalCoins
                         someoneWon = true
                         if onNeutral then
-                            print(string.format(">> [NEUTRAL SURVIVOR] %s selamat di Neutral Beam (+15 Koin)! <<", player.Name))
+                            print(string.format(">> [NEUTRAL SURVIVOR] %s selamat di Neutral Beam (+%d Koin)! <<", player.Name, finalCoins))
                         end
                     end
                 end

@@ -16,3 +16,4 @@
 > 
 > 4. **Format Pengingat**:
 >    * Selipkan pengingat hangat dan memotivasi (misalnya: menanyakan progres apa yang siap di-commit, atau menawarkan bantuan langsung untuk mengeksekusi `git add`, `commit`, dan `push`).
+

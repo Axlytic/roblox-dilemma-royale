@@ -1,7 +1,7 @@
 --!strict
 -- ============================================================
 -- ★ DILEMMA ROYALE: DOUBLE JUMP CLIENT CONTROLLER ★
--- LocalScript: StarterPlayerScripts (Multi-Jump Mobility System)
+-- LocalScript: StarterPlayerScripts - Integrasi Agility Stat Booster
 -- ============================================================
 
 local UserInputService = game:GetService("UserInputService")
@@ -14,7 +14,17 @@ local rootPart: BasePart? = nil
 
 local canDoubleJump = false
 local hasDoubleJumped = false
-local JUMP_POWER_BOOST = 50
+
+local function getAgilityBoost(): number
+    local stats = player:FindFirstChild("PlayerStats")
+    if stats then
+        local agility = stats:FindFirstChild("Agility") :: IntValue?
+        if agility then
+            return agility.Value * 3.5
+        end
+    end
+    return 0
+end
 
 local function setupCharacter(char: Model)
     character = char
@@ -50,13 +60,14 @@ UserInputService.JumpRequest:Connect(function()
         canDoubleJump = false
 
         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        local jumpBoost = 48 + getAgilityBoost()
         rootPart.AssemblyLinearVelocity = Vector3.new(
             rootPart.AssemblyLinearVelocity.X,
-            JUMP_POWER_BOOST,
+            jumpBoost,
             rootPart.AssemblyLinearVelocity.Z
         )
 
-        -- Efek visual kecil lompat kedua (Jump Ring Part / Particle)
+        -- Efek visual cincin loncatan neon
         local ring = Instance.new("Part")
         ring.Shape = Enum.PartType.Cylinder
         ring.Size = Vector3.new(0.2, 5, 5)
@@ -79,5 +90,4 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
-print(">> [CLIENT] DoubleJumpClient Sukses Dimuat! <<")
-
+print(">> [CLIENT] DoubleJumpClient (Agility Powered) Sukses Dimuat! <<")

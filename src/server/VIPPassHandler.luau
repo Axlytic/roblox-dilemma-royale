@@ -1,7 +1,7 @@
 --!strict
 -- ============================================================
--- ★ DILEMMA ROYALE: VIP SULTAN PASS & PORTAL HANDLER ★
--- Server Script: Game Pass Verification (ID: 2064678688) & Teleporter
+-- ★ DILEMMA ROYALE: IMPERIAL VIP GATE & PASS HANDLER ★
+-- Server Script: Aspek 4 - Verifikasi Akses Game Pass VIP (2064678688)
 -- ============================================================
 
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -11,10 +11,9 @@ local VIP_GAMEPASS_ID = 2064678688
 local DEVELOPER_NAMES = {["Axlytic0"] = true}
 
 local arena = workspace:WaitForChild("DilemmaArena")
-local vipPad = arena:WaitForChild("VIPPortalPad")
-local vipLounge = arena:WaitForChild("VIPLounge")
-
-local VIP_LOUNGE_DESTINATION = Vector3.new(0, 95, 0)
+local colosseum = arena:WaitForChild("ColosseumStructure")
+local vipBox = colosseum:WaitForChild("ImperialVIPBox")
+local vipGate = vipBox:WaitForChild("VIPGateSensor") :: Part
 
 local debounceList: {[number]: boolean} = {}
 
@@ -36,7 +35,7 @@ local function checkVIPAccess(player: Player): boolean
     return false
 end
 
-local function onVIPPADTouched(hit: BasePart)
+local function onGateTouched(hit: BasePart)
     local char = hit.Parent
     if not char then return end
 
@@ -52,15 +51,21 @@ local function onVIPPADTouched(hit: BasePart)
     end)
 
     local isVIP = checkVIPAccess(player)
+    local root = char:FindFirstChild("HumanoidRootPart") :: BasePart?
 
     if isVIP then
-        local root = char:FindFirstChild("HumanoidRootPart") :: BasePart?
-        if root then
-            root.CFrame = CFrame.new(VIP_LOUNGE_DESTINATION)
-            print(string.format(">> [VIP] Pemain VIP %s (%s) diteleportasi ke Sky Lounge! <<", player.Name, DEVELOPER_NAMES[player.Name] and "DEVELOPER" or "SULTAN"))
-        end
+        print(string.format(">> [VIP] Akses Diterima untuk %s! Selamat datang di Imperial VIP Lounge! <<", player.Name))
+        -- Efek Visual Pintu Terbuka Hijau
+        vipGate.Color = Color3.fromRGB(0, 255, 127)
+        task.delay(1.5, function()
+            vipGate.Color = Color3.fromRGB(255, 215, 0)
+        end)
     else
-        -- Tampilkan Prompt Beli Game Pass
+        -- Dorong Mundur Sedikit Keluar Gerbang
+        if root then
+            root.AssemblyLinearVelocity = Vector3.new(0, 5, -25)
+        end
+
         print(string.format(">> [VIP] Pemain %s bukan VIP, memunculkan prompt beli pass %d <<", player.Name, VIP_GAMEPASS_ID))
         pcall(function()
             MarketplaceService:PromptGamePassPurchase(player, VIP_GAMEPASS_ID)
@@ -68,7 +73,6 @@ local function onVIPPADTouched(hit: BasePart)
     end
 end
 
-vipPad.Touched:Connect(onVIPPADTouched)
+vipGate.Touched:Connect(onGateTouched)
 
-print(">> [SUKSES] VIPPassHandler Resmi Berjalan dengan ID: 2064678688! <<")
-
+print(">> [SUKSES] VIPPassHandler Imperial Gate Resmi Aktif! <<")
