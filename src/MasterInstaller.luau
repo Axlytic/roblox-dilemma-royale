@@ -28,7 +28,6 @@ end
 local remoteEvents = {
 	"PanicMode",
 	"RoundWon",
-	"WinStreakChanged",
 	"UpdateOverheadTitle",
 	"DailyRewardAvailable",
 }
@@ -57,6 +56,7 @@ end
 
 -- BindableEvents (server-internal)
 local bindableEvents = {
+	"WinStreakChanged",
 	"ServerAddCoins",
 	"ServerGrantConsumable",
 	"ServerGrantTitle",
@@ -90,10 +90,10 @@ end
 -- =========================================================
 local SoundService = game:GetService("SoundService")
 local sounds = {
-	{ name = "SFX_Tick",   id = "rbxassetid://6895079072" },
-	{ name = "SFX_Alarm",  id = "rbxassetid://9113590730" },
-	{ name = "SFX_Rumble", id = "rbxassetid://6895079072" },
-	{ name = "SFX_Win",    id = "rbxassetid://9113590730" },
+	{ name = "SFX_Tick",   id = "rbxasset://sounds/electronicpingshort.wav" },
+	{ name = "SFX_Alarm",  id = "rbxasset://sounds/bell.wav" },
+	{ name = "SFX_Rumble", id = "rbxasset://sounds/electronicpingshort.wav" },
+	{ name = "SFX_Win",    id = "rbxasset://sounds/bell.wav" },
 }
 for _, s in sounds do
 	if not SoundService:FindFirstChild(s.name) then

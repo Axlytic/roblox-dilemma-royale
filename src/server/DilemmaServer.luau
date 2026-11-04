@@ -103,7 +103,7 @@ end
 
 local evPanicMode        = getOrMakeEvent("PanicMode")
 local evRoundWon         = getOrMakeEvent("RoundWon")
-local evWinStreakChanged  = getOrMakeEvent("WinStreakChanged")
+local beWinStreakChanged = getOrMakeBindable("WinStreakChanged")
 
 -- BindableEvents for internal server communication
 local function getOrMakeBindable(name: string): BindableEvent
@@ -252,8 +252,26 @@ local function setupPlayer(player: Player)
 	playerCosmetics[player.UserId] = {}
 end
 
+local lastSaved: { [number]: number } = {}
+local lastSaved: { [number]: number } = {}
+local lastSaved: { [number]: number } = {}
 local function savePlayer(player: Player)
 	if not PlayerDataStore then return end
+	local now = os.clock()
+	if lastSaved[player.UserId] and (now - lastSaved[player.UserId]) < 4 then
+		return
+	end
+	lastSaved[player.UserId] = now
+	local now = os.clock()
+	if lastSaved[player.UserId] and (now - lastSaved[player.UserId]) < 4 then
+		return
+	end
+	lastSaved[player.UserId] = now
+	local now = os.clock()
+	if lastSaved[player.UserId] and (now - lastSaved[player.UserId]) < 4 then
+		return
+	end
+	lastSaved[player.UserId] = now
 	local ls = player:FindFirstChild("leaderstats")
 	if not ls then return end
 	local wins  = ls:FindFirstChild("Wins")  :: IntValue?
@@ -421,7 +439,7 @@ local function awardWinners(winningPlate: Part, onNeutralCheck: (Model) -> boole
 				playerStreaks[uid] = (playerStreaks[uid] or 0) + 1
 
 				-- Fire events
-				evWinStreakChanged:FireServer(player, playerWins[uid], playerStreaks[uid])
+				beWinStreakChanged:Fire(player, playerWins[uid], playerStreaks[uid])
 
 				local rank = getRankTitle(playerWins[uid])
 				evRoundWon:FireClient(player, {

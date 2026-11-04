@@ -122,7 +122,7 @@ countdownLabel.Parent = vignetteGui
 local heartbeatSound = Instance.new("Sound")
 heartbeatSound.Name = "PanicHeartbeat"
 -- rbxassetid://9113590730 = heartbeat/pulse SFX (commonly used, safe)
-heartbeatSound.SoundId = "rbxassetid://9113590730"
+heartbeatSound.SoundId = "rbxasset://sounds/bass.wav"
 heartbeatSound.Volume = 0
 heartbeatSound.RollOffMaxDistance = 0
 heartbeatSound.Looped = false
@@ -131,7 +131,7 @@ heartbeatSound.Parent = SoundService
 -- Tick sound (sharp click for each second countdown)
 local tickSound = Instance.new("Sound")
 tickSound.Name = "PanicTick"
-tickSound.SoundId = "rbxassetid://6895079072"  -- clock tick SFX
+tickSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"  -- clock tick SFX
 tickSound.Volume = 0.4
 tickSound.Looped = false
 tickSound.Parent = SoundService

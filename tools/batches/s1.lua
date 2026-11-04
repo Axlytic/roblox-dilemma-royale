@@ -25,10 +25,8 @@ local Players = game:GetService("Players")
 local VIP_GAMEPASS_ID = 2064678688
 local DEVELOPER_NAMES = {["Axlytic0"] = true}
 
-local arena = workspace:WaitForChild("DilemmaArena")
-local colosseum = arena:WaitForChild("ColosseumStructure")
-local vipBox = colosseum:WaitForChild("ImperialVIPBox")
-local vipGate = vipBox:WaitForChild("VIPGateSensor") :: Part
+local arena = workspace:WaitForChild("DilemmaArena", 15) :: Folder?
+local colosseum = arena and arena:WaitForChild("ColosseumStructure", 15) :: Folder?
 
 local debounceList: {[number]: boolean} = {}
 
@@ -88,7 +86,21 @@ local function onGateTouched(hit: BasePart)
     end
 end
 
-vipGate.Touched:Connect(onGateTouched)
+if colosseum then
+	local function wireGate(vipBox: Instance)
+		local vipGate = vipBox:WaitForChild("VIPGateSensor", 10) :: Part?
+		if vipGate then
+			vipGate.Touched:Connect(onGateTouched)
+			print(">> [VIP] Gate Sensor terhubung! <<")
+		end
+	end
+
+	local cur = colosseum:FindFirstChild("ImperialVIPBox")
+	if cur then wireGate(cur) end
+	colosseum.ChildAdded:Connect(function(c)
+		if c.Name == "ImperialVIPBox" then wireGate(c) end
+	end)
+end
 
 print(">> [SUKSES] VIPPassHandler Imperial Gate Resmi Aktif! <<")
 
@@ -348,8 +360,14 @@ local function setupPlayerStats(player: Player)
     end)
 end
 
+local lastSavedStats: { [number]: number } = {}
 local function savePlayerStats(player: Player)
     if not PlayerDataStore then return end
+    local now = os.clock()
+    if lastSavedStats[player.UserId] and (now - lastSavedStats[player.UserId]) < 4 then
+        return
+    end
+    lastSavedStats[player.UserId] = now
     local statsFolder = player:FindFirstChild("PlayerStats")
     if not statsFolder then return end
 

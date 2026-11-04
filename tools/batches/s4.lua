@@ -345,23 +345,38 @@ local function buildColosseumStructure(B: BiomeConfig, folder: Folder)
 		B.accentColor, Enum.Material.SmoothPlastic, folder
 	)
 
-	-- ── IMPERIAL VIP BOX (ALWAYS GOLD — biome accent color) ──
+	-- ── IMPERIAL VIP BOX (Container Model for VIPPassHandler) ──
+	local vipModel = folder:FindFirstChild("ImperialVIPBox") :: Model?
+	if not vipModel then
+		vipModel = Instance.new("Model")
+		vipModel.Name = "ImperialVIPBox"
+		vipModel.Parent = folder
+	end
+
 	local vipBox = createPart("VIPBox_Platform",
 		Vector3.new(28, 2, 14),
 		CFrame.new(0, 68, -52),
-		Color3.fromRGB(80, 70, 50), Enum.Material.Marble, folder
+		Color3.fromRGB(80, 70, 50), Enum.Material.Marble, vipModel
+	)
+
+	-- VIP Gate Sensor Part (Touch sensor for game pass check)
+	local vipGate = createPart("VIPGateSensor",
+		Vector3.new(12, 8, 2),
+		CFrame.new(0, 71, -44.5),
+		Color3.fromRGB(255, 215, 0), Enum.Material.Neon, vipModel,
+		0.75, false
 	)
 
 	-- VIP Throne
 	createPart("GoldenThrone",
 		Vector3.new(4, 5, 3),
 		CFrame.new(0, 70.5, -52),
-		Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, folder
+		Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, vipModel
 	)
 	createPart("ThroneBack",
 		Vector3.new(4, 7, 1),
 		CFrame.new(0, 73.5, -53.5),
-		Color3.fromRGB(255, 180, 0), Enum.Material.SmoothPlastic, folder
+		Color3.fromRGB(255, 180, 0), Enum.Material.SmoothPlastic, vipModel
 	)
 
 	-- VIP Gold railing
@@ -369,23 +384,21 @@ local function buildColosseumStructure(B: BiomeConfig, folder: Folder)
 		createPart("VIPRailing_" .. (side > 0 and "R" or "L"),
 			Vector3.new(0.5, 3, 14),
 			CFrame.new(side * 14, 70, -52),
-			Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, folder
+			Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, vipModel
 		)
 	end
 	createPart("VIPRailing_Front",
 		Vector3.new(28, 3, 0.5),
 		CFrame.new(0, 70, -45),
-		Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, folder
+		Color3.fromRGB(255, 215, 0), Enum.Material.SmoothPlastic, vipModel
 	)
 
-	-- VIP gold lighting
 	addPointLight(vipBox, Color3.fromRGB(255, 215, 80), 1.5, 18)
 
-	-- VIP red carpet
 	createPart("RedCarpet",
 		Vector3.new(6, 0.2, 14),
 		CFrame.new(0, 69.1, -52),
-		Color3.fromRGB(180, 20, 20), Enum.Material.SmoothPlastic, folder
+		Color3.fromRGB(180, 20, 20), Enum.Material.SmoothPlastic, vipModel
 	)
 
 	-- ── ARENA PLATES (must exist for DilemmaServer refs) ──

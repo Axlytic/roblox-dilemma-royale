@@ -491,7 +491,7 @@ local function spawnCornerFire(position: Vector3, name: string)
 
 	-- Fire particles (rising embers)
 	local fire = Instance.new("ParticleEmitter")
-	fire.Texture     = "rbxassetid://6880497226"
+	fire.Texture     = "rbxasset://textures/particles/sparkles_main.dds"
 	fire.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 0)),
 		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 180, 0)),

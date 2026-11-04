@@ -90,8 +90,14 @@ local function setupPlayerStats(player: Player)
     end)
 end
 
+local lastSavedStats: { [number]: number } = {}
 local function savePlayerStats(player: Player)
     if not PlayerDataStore then return end
+    local now = os.clock()
+    if lastSavedStats[player.UserId] and (now - lastSavedStats[player.UserId]) < 4 then
+        return
+    end
+    lastSavedStats[player.UserId] = now
     local statsFolder = player:FindFirstChild("PlayerStats")
     if not statsFolder then return end
 

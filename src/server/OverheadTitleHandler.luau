@@ -218,7 +218,7 @@ local function attachAura(character: Model, player: Player)
 
 	-- Base aura: rising sparks
 	local sparks = Instance.new("ParticleEmitter")
-	sparks.Texture = "rbxassetid://6880497226"  -- spark texture (Roblox default approved)
+	sparks.Texture = "rbxasset://textures/particles/sparkles_main.dds"  -- spark texture (Roblox default approved)
 	sparks.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, vip and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(255, 100, 0)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
@@ -245,7 +245,7 @@ local function attachAura(character: Model, player: Player)
 	-- VIP angel ring (extra glow emission)
 	if vip then
 		local ring = Instance.new("ParticleEmitter")
-		ring.Texture = "rbxassetid://6880479568"  -- ring/circle glow texture
+		ring.Texture = "rbxasset://textures/particles/sparkles_main.dds"  -- ring/circle glow texture
 		ring.Color = ColorSequence.new(Color3.fromRGB(255, 230, 100))
 		ring.LightEmission = 1
 		ring.LightInfluence = 0
@@ -274,11 +274,19 @@ local function getOrMakeEvent(name: string): RemoteEvent
 end
 
 local evUpdateTitle  = getOrMakeEvent("UpdateOverheadTitle")  -- server→client not needed; server owns billboard
-local evWinStreakChanged = getOrMakeEvent("WinStreakChanged") -- DilemmaServer fires this
+local function getOrMakeBindable(name: string): BindableEvent
+	local be = Events:FindFirstChild(name) :: BindableEvent?
+	if not be then
+		be = Instance.new("BindableEvent")
+		be.Name = name
+		be.Parent = Events
+	end
+	return be
+end
 
--- DilemmaServer fires WinStreakChanged(player, totalWins, currentStreak)
-evWinStreakChanged.OnServerEvent:Connect(function(_sender: Player, targetPlayer: Player, totalWins: number, streak: number)
-	-- Only allow server-side scripts to fire this (validate sender == server ... RemoteEvent from server script)
+local beWinStreakChanged = getOrMakeBindable("WinStreakChanged")
+
+beWinStreakChanged.Event:Connect(function(targetPlayer: Player, totalWins: number, streak: number)
 	playerWins[targetPlayer.UserId]    = totalWins
 	playerStreaks[targetPlayer.UserId] = streak
 	refreshBoard(targetPlayer)
