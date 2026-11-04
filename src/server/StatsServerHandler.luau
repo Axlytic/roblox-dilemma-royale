@@ -159,3 +159,4 @@ upgradeRemote.OnServerInvoke = function(player: Player, statName: string)
 end
 
 print(">> [SUKSES] StatsServerHandler (Aspek 2: RPG Attributes) Berjalan! <<")
+

@@ -229,3 +229,4 @@ for _, stat in ipairs(STAT_DEFINITIONS) do
 end
 
 print(">> [CLIENT] StatsMenuController Sukses Dimuat! <<")
+

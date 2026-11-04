@@ -149,3 +149,4 @@ end
 
 print(">> [3/4] Colosseum Stadium & VIP Imperial Selesai Dibangun! <<")
 print(">> [4/4] Seluruh 4 Aspek Gameplay Sukses Terpasang 100%! Tekan Play (F5) untuk Menguji! <<")
+
