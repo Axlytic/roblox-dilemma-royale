@@ -1,152 +1,208 @@
 --!strict
 -- ============================================================
--- ★ DILEMMA ROYALE: ONE-CLICK MASTER INSTALLER v3.0 ★
--- Jalankan skrip ini sekali di Command Bar Roblox Studio (Mode Edit)
--- untuk memasang seluruh 4 Pilar Gameplay secara otomatis!
+-- ★ DILEMMA ROYALE: MASTER INSTALLER v2.0 ★
+-- Jalankan script ini SEKALI di Command Bar Roblox Studio:
+-- game:GetService("ServerScriptService"):FindFirstChild("MasterInstaller"):Clone().Parent = workspace
+-- ATAU: Paste ke Command Bar dan tekan Enter
+--
+-- Fungsi: Membuat seluruh struktur ServerScriptService + StarterPlayerScripts
+-- secara otomatis dari kode terbaru.
 -- ============================================================
 
-local ServerScriptService = game:GetService("ServerScriptService")
-local StarterPlayer = game:GetService("StarterPlayer")
-local StarterPlayerScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
+local SSS   = game:GetService("ServerScriptService")
+local SPS   = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
+local RS    = game:GetService("ReplicatedStorage")
 
-print(">> [START] Memasang 4 Pilar Gameplay Dilemma Royale v3.0... <<")
+-- =========================================================
+-- STEP 1: REPLICATEDSTORAGE SETUP
+-- =========================================================
+local eventsFolder = RS:FindFirstChild("DilemmaEvents") :: Folder?
+if not eventsFolder then
+	eventsFolder = Instance.new("Folder")
+	eventsFolder.Name = "DilemmaEvents"
+	eventsFolder.Parent = RS
+	print("[Installer] ✅ DilemmaEvents folder created in ReplicatedStorage")
+end
 
--- 1. Setup Remotes di ReplicatedStorage
-local remotes = {
-    { Name = "UseSkillRemote", Class = "RemoteEvent" },
-    { Name = "SkillFeedbackRemote", Class = "RemoteEvent" },
-    { Name = "UpgradeStatRemote", Class = "RemoteFunction" },
-    { Name = "ShopRemote", Class = "RemoteFunction" }
+-- RemoteEvents
+local remoteEvents = {
+	"PanicMode",
+	"RoundWon",
+	"WinStreakChanged",
+	"UpdateOverheadTitle",
+	"DailyRewardAvailable",
 }
-
-for _, r in ipairs(remotes) do
-    if not ReplicatedStorage:FindFirstChild(r.Name) then
-        local inst = Instance.new(r.Class)
-        inst.Name = r.Name
-        inst.Parent = ReplicatedStorage
-    end
+for _, name in remoteEvents do
+	if not eventsFolder:FindFirstChild(name) then
+		local ev = Instance.new("RemoteEvent")
+		ev.Name   = name
+		ev.Parent = eventsFolder
+		print("[Installer] ✅ RemoteEvent created:", name)
+	end
 end
 
--- 2. Bersihkan skrip usang di ServerScriptService jika ada
-local oldScripts = {"Script", "GameController", "MainScript"}
-for _, name in ipairs(oldScripts) do
-    local s = ServerScriptService:FindFirstChild(name)
-    if s then s:Destroy() end
+-- RemoteFunctions
+local remoteFunctions = {
+	"ClaimDailyReward",
+	"GetDailyStatus",
+}
+for _, name in remoteFunctions do
+	if not eventsFolder:FindFirstChild(name) then
+		local rf = Instance.new("RemoteFunction")
+		rf.Name   = name
+		rf.Parent = eventsFolder
+		print("[Installer] ✅ RemoteFunction created:", name)
+	end
 end
 
-print(">> [1/4] Remotes & Cleanup Berhasil! <<")
-print(">> [2/4] Membangun Arsitektur Colosseum Stadium & Imperial VIP... <<")
+-- BindableEvents (server-internal)
+local bindableEvents = {
+	"ServerAddCoins",
+	"ServerGrantConsumable",
+	"ServerGrantTitle",
+	"ServerGrantCosmetic",
+}
+for _, name in bindableEvents do
+	if not eventsFolder:FindFirstChild(name) then
+		local be = Instance.new("BindableEvent")
+		be.Name   = name
+		be.Parent = eventsFolder
+		print("[Installer] ✅ BindableEvent created:", name)
+	end
+end
 
--- 3. Jalankan Colosseum Builder langsung
-local arenaFolder = Workspace:FindFirstChild("DilemmaArena")
+-- BindableFunctions (server-internal)
+local bindableFunctions = {
+	"ApplyBiomeLighting",
+	"BuildColosseum",
+}
+for _, name in bindableFunctions do
+	if not RS:FindFirstChild(name) then
+		local bf = Instance.new("BindableFunction")
+		bf.Name   = name
+		bf.Parent = RS
+		print("[Installer] ✅ BindableFunction created:", name)
+	end
+end
+
+-- =========================================================
+-- STEP 2: SOUND SETUP (di SoundService)
+-- =========================================================
+local SoundService = game:GetService("SoundService")
+local sounds = {
+	{ name = "SFX_Tick",   id = "rbxassetid://6895079072" },
+	{ name = "SFX_Alarm",  id = "rbxassetid://9113590730" },
+	{ name = "SFX_Rumble", id = "rbxassetid://6895079072" },
+	{ name = "SFX_Win",    id = "rbxassetid://9113590730" },
+}
+for _, s in sounds do
+	if not SoundService:FindFirstChild(s.name) then
+		local sound     = Instance.new("Sound")
+		sound.Name      = s.name
+		sound.SoundId   = s.id
+		sound.Volume    = 0.5
+		sound.Parent    = SoundService
+		print("[Installer] ✅ Sound created:", s.name)
+	end
+end
+
+-- =========================================================
+-- STEP 3: ARENA PARTS (minimal check — ColosseumBuilder builds the full thing)
+-- =========================================================
+local arenaFolder = workspace:FindFirstChild("DilemmaArena") :: Folder?
 if not arenaFolder then
-    arenaFolder = Instance.new("Folder")
-    arenaFolder.Name = "DilemmaArena"
-    arenaFolder.Parent = Workspace
+	arenaFolder = Instance.new("Folder")
+	arenaFolder.Name = "DilemmaArena"
+	arenaFolder.Parent = workspace
+	print("[Installer] ✅ DilemmaArena folder created in Workspace")
 end
 
--- Bersihkan VIP lama yang terpencil di awan
-local oldVIP = arenaFolder:FindFirstChild("VIPLounge")
-if oldVIP then oldVIP:Destroy() end
-
-local colosseumFolder = arenaFolder:FindFirstChild("ColosseumStructure")
-if not colosseumFolder then
-    colosseumFolder = Instance.new("Folder")
-    colosseumFolder.Name = "ColosseumStructure"
-    colosseumFolder.Parent = arenaFolder
+-- Minimal DilemmaScreen for DilemmaServer to find
+local function ensurePart(name: string, parent: Instance, size: Vector3, pos: Vector3, color: Color3): Part
+	local existing = parent:FindFirstChild(name) :: Part?
+	if existing and existing:IsA("Part") then return existing end
+	local p = Instance.new("Part")
+	p.Name     = name; p.Size = size; p.Position = pos
+	p.Color    = color; p.Anchored = true; p.CanCollide = true
+	p.Parent   = parent
+	return p
 end
 
-local function makePart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance): Part
-    local p = parent:FindFirstChild(name) :: Part?
-    if not p then
-        p = Instance.new("Part")
-        p.Name = name
-        p.Parent = parent
-    end
-    p.Size = size
-    p.CFrame = cf
-    p.Color = color
-    p.Material = mat
-    p.Anchored = true
-    p.CanCollide = true
-    return p
+local screen = arenaFolder:FindFirstChild("DilemmaScreen")
+if not screen then
+	local screenPart = ensurePart("DilemmaScreen", arenaFolder,
+		Vector3.new(20, 10, 1), Vector3.new(0, 56, -50), Color3.fromRGB(20, 20, 20))
+
+	local sg = Instance.new("SurfaceGui")
+	sg.Face = Enum.NormalId.Front
+	sg.Parent = screenPart
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.fromScale(1, 1)
+	frame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+	frame.Parent = sg
+
+	local function makeLabel(name: string, pos: UDim2, size: UDim2, fontSize: number): TextLabel
+		local lbl = Instance.new("TextLabel")
+		lbl.Name = name; lbl.Size = size; lbl.Position = pos
+		lbl.BackgroundTransparency = 1
+		lbl.Font = Enum.Font.GothamBold
+		lbl.TextScaled = true
+		lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+		lbl.Text = name
+		lbl.Parent = frame
+		return lbl
+	end
+
+	makeLabel("TitleText",    UDim2.new(0, 0, 0, 0),    UDim2.new(1, 0, 0.3, 0), 20)
+	makeLabel("QuestionText", UDim2.new(0, 0, 0.3, 0),  UDim2.new(1, 0, 0.45, 0), 16)
+	makeLabel("TimerText",    UDim2.new(0, 0, 0.75, 0), UDim2.new(1, 0, 0.25, 0), 18)
+
+	print("[Installer] ✅ DilemmaScreen with SurfaceGui created")
 end
 
--- Tribun Melingkar Spectator Deck (Y = 59)
-makePart("SpectatorDeck_Main", Vector3.new(70, 3, 30), CFrame.new(0, 59, 68), Color3.fromRGB(30, 32, 40), Enum.Material.Concrete, colosseumFolder)
-makePart("SpectatorDeck_West", Vector3.new(30, 3, 50), CFrame.new(-48, 59, 35) * CFrame.Angles(0, math.rad(25), 0), Color3.fromRGB(35, 37, 45), Enum.Material.Concrete, colosseumFolder)
-makePart("SpectatorDeck_East", Vector3.new(30, 3, 50), CFrame.new(48, 59, 35) * CFrame.Angles(0, math.rad(-25), 0), Color3.fromRGB(35, 37, 45), Enum.Material.Concrete, colosseumFolder)
+-- =========================================================
+-- STEP 4: INSTRUCTION SUMMARY
+-- =========================================================
+print([[
+╔══════════════════════════════════════════════════════════════╗
+║       DILEMMA ROYALE — MASTER INSTALLER v2.0 COMPLETE       ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  📦 ReplicatedStorage:                                       ║
+║     DilemmaEvents/ (RemoteEvents + RemoteFunctions)          ║
+║     ApplyBiomeLighting (BindableFunction)                    ║
+║     BuildColosseum (BindableFunction)                        ║
+║                                                              ║
+║  🔊 SoundService: SFX_Tick, Alarm, Rumble, Win               ║
+║                                                              ║
+║  📺 Workspace: DilemmaArena + DilemmaScreen                  ║
+║                                                              ║
+║  ⚠️  NEXT STEPS — Paste these scripts manually:              ║
+║                                                              ║
+║  SERVER (ServerScriptService):                               ║
+║    1. DilemmaServer.luau         (Game Loop v4)              ║
+║    2. ColosseumBuilder.luau      (Multi-Biome v2)            ║
+║    3. GraphicsOverhaulInstaller.luau (Future Lighting)       ║
+║    4. OverheadTitleHandler.luau  (Rank + Aura + VIP)         ║
+║    5. DailyRewardsHandler.luau   (7-Day Daily Rewards)       ║
+║    6. StatsServerHandler.luau    (RPG Stats)                 ║
+║    7. SkillServerHandler.luau    (Q/E/R Skills)              ║
+║    8. ShopServerHandler.luau     (Shop)                      ║
+║    9. VIPPassHandler.luau        (VIP Gate)                  ║
+║                                                              ║
+║  CLIENT (StarterPlayerScripts):                              ║
+║    1. DailyRewardsController.luau  (Calendar UI)             ║
+║    2. PanicFeedbackController.luau (Camera Shake + Vignette) ║
+║    3. FavoritePromptController.luau (Post-Win Popup)         ║
+║    4. SkillHUDController.luau      (Q/E/R HUD)               ║
+║    5. StatsMenuController.luau     (RPG Stats UI)            ║
+║    6. ShopController.luau          (Shop UI)                 ║
+║    7. DoubleJumpClient.luau        (Multi-Jump)              ║
+║                                                              ║
+║  ✅ Install order: GraphicsOverhaul → ColosseumBuilder       ║
+║     → DilemmaServer → all others                            ║
+╚══════════════════════════════════════════════════════════════╝
+]])
 
-local glass = makePart("SpectatorGlassRailing", Vector3.new(70, 4.5, 1), CFrame.new(0, 62.5, 53), Color3.fromRGB(0, 200, 255), Enum.Material.Glass, colosseumFolder)
-glass.Transparency = 0.65
-
-makePart("ColosseumEntranceBridge", Vector3.new(12, 2, 26), CFrame.new(0, 54.5, 38) * CFrame.Angles(math.rad(-18), 0, 0), Color3.fromRGB(50, 55, 65), Enum.Material.Metal, colosseumFolder)
-
--- Imperial VIP Box di tengah tribun
-local vipBoxFolder = colosseumFolder:FindFirstChild("ImperialVIPBox")
-if not vipBoxFolder then
-    vipBoxFolder = Instance.new("Folder")
-    vipBoxFolder.Name = "ImperialVIPBox"
-    vipBoxFolder.Parent = colosseumFolder
-end
-
-makePart("VIPBalconyFloor", Vector3.new(24, 2, 18), CFrame.new(0, 61, 74), Color3.fromRGB(20, 20, 25), Enum.Material.Marble, vipBoxFolder)
-makePart("VIPRedCarpet", Vector3.new(8, 0.4, 18), CFrame.new(0, 62.1, 74), Color3.fromRGB(180, 20, 30), Enum.Material.Fabric, vipBoxFolder)
-
-local throne = vipBoxFolder:FindFirstChild("GoldenThrone") :: Seat?
-if not throne then
-    throne = Instance.new("Seat")
-    throne.Name = "GoldenThrone"
-    throne.Size = Vector3.new(4, 2, 4)
-    throne.CFrame = CFrame.new(0, 63, 79)
-    throne.Color = Color3.fromRGB(255, 215, 0)
-    throne.Material = Enum.Material.Neon
-    throne.Anchored = true
-    throne.Parent = vipBoxFolder
-    makePart("ThroneBackrest", Vector3.new(4, 6, 1), CFrame.new(0, 66.5, 81), Color3.fromRGB(218, 165, 32), Enum.Material.Marble, vipBoxFolder)
-    makePart("ThroneCrown", Vector3.new(2, 2, 1.2), CFrame.new(0, 70, 81), Color3.fromRGB(255, 230, 0), Enum.Material.Neon, vipBoxFolder)
-end
-
-makePart("VIPPillarLeft", Vector3.new(2, 12, 2), CFrame.new(-11, 67, 66), Color3.fromRGB(255, 215, 0), Enum.Material.Neon, vipBoxFolder)
-makePart("VIPPillarRight", Vector3.new(2, 12, 2), CFrame.new(11, 67, 66), Color3.fromRGB(255, 215, 0), Enum.Material.Neon, vipBoxFolder)
-
-local vipGate = vipBoxFolder:FindFirstChild("VIPGateSensor") :: Part?
-if not vipGate then
-    vipGate = Instance.new("Part")
-    vipGate.Name = "VIPGateSensor"
-    vipGate.Size = Vector3.new(8, 8, 1)
-    vipGate.CFrame = CFrame.new(0, 65, 65)
-    vipGate.Color = Color3.fromRGB(255, 215, 0)
-    vipGate.Material = Enum.Material.ForceField
-    vipGate.Transparency = 0.5
-    vipGate.CanCollide = false
-    vipGate.Anchored = true
-    vipGate.Parent = vipBoxFolder
-
-    local bb = Instance.new("BillboardGui")
-    bb.Size = UDim2.new(0, 220, 0, 50)
-    bb.StudsOffset = Vector3.new(0, 5, 0)
-    bb.AlwaysOnTop = true
-    bb.Parent = vipGate
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = "👑 IMPERIAL VIP LOUNGE 👑\n[ HANYA SULTAN & DEVELOPER ]"
-    label.TextColor3 = Color3.fromRGB(255, 215, 0)
-    label.Font = Enum.Font.GothamBlack
-    label.TextScaled = true
-    label.Parent = bb
-end
-
--- Update Spawn Point ke Tribun Spectator
-local arenaSpawn = arenaFolder:FindFirstChild("ArenaSpawn") :: SpawnLocation?
-if arenaSpawn then
-    arenaSpawn.CFrame = CFrame.new(0, 62, 70)
-end
-
-print(">> [3/4] Colosseum Stadium & VIP Imperial Selesai Dibangun! <<")
-print(">> [4/4] Seluruh 4 Aspek Gameplay Sukses Terpasang 100%! Tekan Play (F5) untuk Menguji! <<")
-
+print("[MasterInstaller v2.0] ✅ Selesai. Ikuti petunjuk di atas untuk paste semua script.")
