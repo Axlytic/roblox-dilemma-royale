@@ -421,3 +421,4 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 print("[DailyRewardsController] ✅ Loaded — Press L to open Daily Rewards. Auto-opens when available.")
+

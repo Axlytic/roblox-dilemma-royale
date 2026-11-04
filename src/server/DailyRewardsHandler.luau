@@ -282,3 +282,4 @@ game:BindToClose(function()
 end)
 
 print("[DailyRewardsHandler] ✅ Loaded — 7-day login reward system active.")
+

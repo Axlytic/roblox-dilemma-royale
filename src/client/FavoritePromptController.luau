@@ -260,3 +260,4 @@ evRoundWon.OnClientEvent:Connect(function(data: { wins: number, streak: number, 
 end)
 
 print("[FavoritePromptController] ✅ Loaded — Post-win favorite prompt with confetti active.")
+

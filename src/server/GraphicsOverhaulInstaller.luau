@@ -13,7 +13,7 @@ local Workspace = game:GetService("Workspace")
 -- =========================================================
 -- STEP 1: LIGHTING SERVICE SETTINGS
 -- =========================================================
-Lighting.Technology         = Enum.Technology.Future   -- Highest quality renderer
+pcall(function() Lighting.Technology = Enum.Technology.Future end)   -- Highest quality renderer
 Lighting.GlobalShadows      = true
 Lighting.Ambient            = Color3.fromRGB(40, 35, 55)       -- Deep purple-dark ambient
 Lighting.OutdoorAmbient     = Color3.fromRGB(55, 50, 70)
@@ -356,3 +356,4 @@ bfApplyBiomeLighting.OnInvoke = function(biomeId: number)
 end
 
 print("[GraphicsOverhaulInstaller] ✅ Loaded — Future Lighting, Bloom, Atmosphere, DOF, SunRays, Corner Fires active.")
+

@@ -275,3 +275,4 @@ evPanicMode.OnClientEvent:Connect(function(config: { active: boolean, countdown:
 end)
 
 print("[PanicFeedbackController] ✅ Loaded — Camera shake, red vignette, countdown pulse ready.")
+
